@@ -1,9 +1,19 @@
 package co.com.bootcamp.api.helpers;
 
+import co.com.bootcamp.api.dto.BootcampListResponseDto;
+import co.com.bootcamp.api.dto.BootcampPageResponseDto;
 import co.com.bootcamp.api.dto.BootcampRequestDto;
 import co.com.bootcamp.api.dto.BootcampResponseDto;
+import co.com.bootcamp.api.dto.CapacidadInfoDto;
+import co.com.bootcamp.api.dto.TecnologiaInfoDto;
 import co.com.bootcamp.model.bootcamp.Bootcamp;
+import co.com.bootcamp.model.bootcamp.BootcampConCapacidades;
+import co.com.bootcamp.model.bootcamp.gateways.CapacidadInfo;
+import co.com.bootcamp.model.bootcamp.gateways.TecnologiaInfo;
+import co.com.bootcamp.model.bootcamp.page.CustomPage;
 import org.springframework.stereotype.Component;
+
+import java.util.stream.Collectors;
 
 @Component
 public class BootcampMapper {
@@ -26,6 +36,51 @@ public class BootcampMapper {
                 bootcamp.getFechaLanzamiento(),
                 bootcamp.getDuracion(),
                 bootcamp.getCapacidadesIds()
+        );
+    }
+
+    public BootcampPageResponseDto toPageResponseDto(CustomPage<BootcampConCapacidades> page) {
+        return new BootcampPageResponseDto(
+                page.getData().stream()
+                        .map(this::toListResponseDto)
+                        .collect(Collectors.toList()),
+                page.getTotalRows(),
+                page.getPageSize(),
+                page.getPageNum(),
+                page.getHasNext(),
+                page.getSort()
+        );
+    }
+
+    private BootcampListResponseDto toListResponseDto(BootcampConCapacidades bootcamp) {
+        return new BootcampListResponseDto(
+                bootcamp.getId(),
+                bootcamp.getNombre(),
+                bootcamp.getDescripcion(),
+                bootcamp.getFechaLanzamiento(),
+                bootcamp.getDuracion(),
+                bootcamp.getCapacidades().stream()
+                        .map(this::toCapacidadInfoDto)
+                        .collect(Collectors.toList())
+        );
+    }
+
+    private CapacidadInfoDto toCapacidadInfoDto(CapacidadInfo capacidad) {
+        return new CapacidadInfoDto(
+                capacidad.getId(),
+                capacidad.getNombre(),
+                capacidad.getTecnologias() != null
+                        ? capacidad.getTecnologias().stream()
+                                .map(this::toTecnologiaInfoDto)
+                                .collect(Collectors.toList())
+                        : java.util.Collections.emptyList()
+        );
+    }
+
+    private TecnologiaInfoDto toTecnologiaInfoDto(TecnologiaInfo tecnologia) {
+        return new TecnologiaInfoDto(
+                tecnologia.getId(),
+                tecnologia.getNombre()
         );
     }
 }

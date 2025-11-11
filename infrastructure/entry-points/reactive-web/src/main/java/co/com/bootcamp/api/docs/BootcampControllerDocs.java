@@ -1,9 +1,12 @@
 package co.com.bootcamp.api.docs;
 
 import co.com.bootcamp.api.BootcampHandler;
+import co.com.bootcamp.api.dto.BootcampPageResponseDto;
 import co.com.bootcamp.api.dto.BootcampRequestDto;
 import co.com.bootcamp.api.dto.BootcampResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
@@ -41,6 +44,59 @@ public interface BootcampControllerDocs {
                                     @ApiResponse(
                                             responseCode = "400",
                                             description = "Error de validación en los datos enviados o cantidad de capacidades inválida"
+                                    ),
+                                    @ApiResponse(
+                                            responseCode = "500",
+                                            description = "Error interno del servidor"
+                                    )
+                            }
+                    )
+            ),
+            @RouterOperation(
+                    path = "/api/bootcamp",
+                    produces = MediaType.APPLICATION_JSON_VALUE,
+                    method = RequestMethod.GET,
+                    beanClass = BootcampHandler.class,
+                    beanMethod = "listenListarBootcamps",
+                    operation = @Operation(
+                            operationId = "listarBootcamps",
+                            summary = "Listar bootcamps",
+                            description = "Lista los bootcamps con paginación y ordenamiento. Permite ordenar por nombre, fechaLanzamiento, duracion o cantidadCapacidades. Cada bootcamp incluye sus capacidades asociadas con sus tecnologías.",
+                            parameters = {
+                                    @Parameter(
+                                            name = "page",
+                                            description = "Número de página (comienza en 0)",
+                                            in = ParameterIn.QUERY,
+                                            schema = @Schema(type = "integer", defaultValue = "0", example = "0")
+                                    ),
+                                    @Parameter(
+                                            name = "size",
+                                            description = "Tamaño de página (número de elementos por página)",
+                                            in = ParameterIn.QUERY,
+                                            schema = @Schema(type = "integer", defaultValue = "10", example = "10")
+                                    ),
+                                    @Parameter(
+                                            name = "sortBy",
+                                            description = "Campo por el cual ordenar: 'nombre', 'fechaLanzamiento', 'duracion' o 'cantidadCapacidades'",
+                                            in = ParameterIn.QUERY,
+                                            schema = @Schema(type = "string", defaultValue = "nombre", example = "nombre")
+                                    ),
+                                    @Parameter(
+                                            name = "sortDirection",
+                                            description = "Dirección del ordenamiento: 'ASC' o 'DESC'",
+                                            in = ParameterIn.QUERY,
+                                            schema = @Schema(type = "string", defaultValue = "ASC", example = "ASC")
+                                    )
+                            },
+                            responses = {
+                                    @ApiResponse(
+                                            responseCode = "200",
+                                            description = "Lista de bootcamps obtenida exitosamente",
+                                            content = @Content(schema = @Schema(implementation = BootcampPageResponseDto.class))
+                                    ),
+                                    @ApiResponse(
+                                            responseCode = "400",
+                                            description = "Error de validación en los parámetros"
                                     ),
                                     @ApiResponse(
                                             responseCode = "500",
