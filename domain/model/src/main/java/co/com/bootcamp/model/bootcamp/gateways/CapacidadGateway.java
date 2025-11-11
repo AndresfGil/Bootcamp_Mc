@@ -5,5 +5,5 @@ import reactor.core.publisher.Flux;
 import java.util.List;
 
 public interface CapacidadGateway {
-    Flux<BootcampInfo> obtenerCapacidadesPorIds(List<Long> ids);
+    Flux<CapacidadInfo> obtenerCapacidadesPorIds(List<Long> ids);
 }
