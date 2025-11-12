@@ -18,12 +18,17 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 public class RestConsumerConfig {
 
     private final String url;
-
+    private final String capacidadUrl;
+    private final String tecnologiaUrl;
     private final int timeout;
 
     public RestConsumerConfig(@Value("${adapters.restconsumer.url}") String url,
+                              @Value("${adapters.restconsumer.capacidad-url}") String capacidadUrl,
+                              @Value("${adapters.restconsumer.tecnologia-url}") String tecnologiaUrl,
                               @Value("${adapters.restconsumer.timeout}") int timeout) {
         this.url = url;
+        this.capacidadUrl = capacidadUrl;
+        this.tecnologiaUrl = tecnologiaUrl;
         this.timeout = timeout;
     }
 
@@ -31,6 +36,24 @@ public class RestConsumerConfig {
     public WebClient getWebClient(WebClient.Builder builder) {
         return builder
             .baseUrl(url)
+            .defaultHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+            .clientConnector(getClientHttpConnector())
+            .build();
+    }
+
+    @Bean("capacidadWebClient")
+    public WebClient getCapacidadWebClient(WebClient.Builder builder) {
+        return builder
+            .baseUrl(capacidadUrl)
+            .defaultHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+            .clientConnector(getClientHttpConnector())
+            .build();
+    }
+
+    @Bean("tecnologiaWebClient")
+    public WebClient getTecnologiaWebClient(WebClient.Builder builder) {
+        return builder
+            .baseUrl(tecnologiaUrl)
             .defaultHeader(HttpHeaders.CONTENT_TYPE, "application/json")
             .clientConnector(getClientHttpConnector())
             .build();

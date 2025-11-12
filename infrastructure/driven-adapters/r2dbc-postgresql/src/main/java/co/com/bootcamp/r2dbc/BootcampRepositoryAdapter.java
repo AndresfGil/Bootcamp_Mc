@@ -11,6 +11,7 @@ import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
 
+import java.util.Collections;
 import java.util.List;
 
 @Repository
@@ -66,6 +67,7 @@ public class BootcampRepositoryAdapter extends ReactiveAdapterOperations<
                     entity.setFechaLanzamiento(row.get("fecha_lanzamiento", java.time.LocalDate.class));
                     entity.setDuracion(row.get("duracion", Integer.class));
                     entity.setCapacidadesIds(row.get("capacidades_ids", String.class));
+                    entity.setTecnologiasIds(row.get("tecnologias_ids", String.class));
                     return entity;
                 })
                 .all()
@@ -109,5 +111,107 @@ public class BootcampRepositoryAdapter extends ReactiveAdapterOperations<
             default ->
                 "nombre " + direction;
         };
+    }
+
+    @Override
+    public Mono<Bootcamp> obtenerBootcampPorId(Long id) {
+        return repository.findById(id)
+                .map(bootcampEntityMapper::toDomain);
+    }
+
+    @Override
+    public Mono<Void> eliminarBootcamp(Long id) {
+        return repository.deleteById(id)
+                .then();
+    }
+
+    @Override
+    public Mono<List<Long>> obtenerCapacidadesReferenciadasPorOtrosBootcamps(List<Long> capacidadIds, Long bootcampIdExcluir) {
+        if (capacidadIds == null || capacidadIds.isEmpty()) {
+            return Mono.just(java.util.Collections.emptyList());
+        }
+
+        StringBuilder sqlBuilder = new StringBuilder(
+                "SELECT capacidades_ids FROM bootcamp WHERE id != :bootcampIdExcluir AND ("
+        );
+
+        for (int i = 0; i < capacidadIds.size(); i++) {
+            if (i > 0) {
+                sqlBuilder.append(" OR ");
+            }
+            sqlBuilder.append("JSON_CONTAINS(capacidades_ids, :capacidadId").append(i).append(")");
+        }
+        sqlBuilder.append(")");
+
+        DatabaseClient.GenericExecuteSpec spec = databaseClient.sql(sqlBuilder.toString())
+                .bind("bootcampIdExcluir", bootcampIdExcluir);
+
+        for (int i = 0; i < capacidadIds.size(); i++) {
+            spec = spec.bind("capacidadId" + i, "[" + capacidadIds.get(i) + "]");
+        }
+
+        return spec.map((row, metadata) -> {
+                    String capacidadesJson = row.get("capacidades_ids", String.class);
+                    return parseJsonToList(capacidadesJson);
+                })
+                .all()
+                .collectList()
+                .map(listaCapacidades -> listaCapacidades.stream()
+                        .flatMap(List::stream)
+                        .distinct()
+                        .filter(capacidadIds::contains)
+                        .toList());
+    }
+
+    @Override
+    public Mono<List<Long>> obtenerTecnologiasReferenciadasPorOtrosBootcamps(List<Long> tecnologiaIds, Long bootcampIdExcluir) {
+        if (tecnologiaIds == null || tecnologiaIds.isEmpty()) {
+            return Mono.just(java.util.Collections.emptyList());
+        }
+
+        StringBuilder sqlBuilder = new StringBuilder(
+                "SELECT tecnologias_ids FROM bootcamp WHERE id != :bootcampIdExcluir AND tecnologias_ids IS NOT NULL AND ("
+        );
+
+        for (int i = 0; i < tecnologiaIds.size(); i++) {
+            if (i > 0) {
+                sqlBuilder.append(" OR ");
+            }
+            sqlBuilder.append("JSON_CONTAINS(tecnologias_ids, :tecnologiaId").append(i).append(")");
+        }
+        sqlBuilder.append(")");
+
+        DatabaseClient.GenericExecuteSpec spec = databaseClient.sql(sqlBuilder.toString())
+                .bind("bootcampIdExcluir", bootcampIdExcluir);
+
+        for (int i = 0; i < tecnologiaIds.size(); i++) {
+            spec = spec.bind("tecnologiaId" + i, "[" + tecnologiaIds.get(i) + "]");
+        }
+
+        return spec.map((row, metadata) -> {
+                    String tecnologiasJson = row.get("tecnologias_ids", String.class);
+                    return parseJsonToList(tecnologiasJson);
+                })
+                .all()
+                .collectList()
+                .map(listaTecnologias -> listaTecnologias.stream()
+                        .flatMap(List::stream)
+                        .distinct()
+                        .filter(tecnologiaIds::contains)
+                        .toList());
+    }
+
+    private List<Long> parseJsonToList(String json) {
+        if (json == null || json.isEmpty() || json.equals("[]")) {
+            return Collections.emptyList();
+        }
+        try {
+            return bootcampEntityMapper.getJsonMapper().readValue(
+                    json,
+                    new com.fasterxml.jackson.core.type.TypeReference<List<Long>>() {}
+            );
+        } catch (Exception e) {
+            return Collections.emptyList();
+        }
     }
 }

@@ -13,7 +13,6 @@ import co.com.bootcamp.model.bootcamp.gateways.TecnologiaInfo;
 import co.com.bootcamp.model.bootcamp.page.CustomPage;
 import org.springframework.stereotype.Component;
 
-import java.util.stream.Collectors;
 
 @Component
 public class BootcampMapper {
@@ -43,7 +42,7 @@ public class BootcampMapper {
         return new BootcampPageResponseDto(
                 page.getData().stream()
                         .map(this::toListResponseDto)
-                        .collect(Collectors.toList()),
+                        .toList(),
                 page.getTotalRows(),
                 page.getPageSize(),
                 page.getPageNum(),
@@ -61,7 +60,7 @@ public class BootcampMapper {
                 bootcamp.getDuracion(),
                 bootcamp.getCapacidades().stream()
                         .map(this::toCapacidadInfoDto)
-                        .collect(Collectors.toList())
+                        .toList()
         );
     }
 
@@ -72,7 +71,7 @@ public class BootcampMapper {
                 capacidad.getTecnologias() != null
                         ? capacidad.getTecnologias().stream()
                                 .map(this::toTecnologiaInfoDto)
-                                .collect(Collectors.toList())
+                                .toList()
                         : java.util.Collections.emptyList()
         );
     }

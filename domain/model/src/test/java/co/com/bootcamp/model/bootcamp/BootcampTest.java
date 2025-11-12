@@ -14,6 +14,7 @@ class BootcampTest {
     @Test
     void builder_DeberiaCrearInstanciaConTodosLosCampos() {
         List<Long> capacidadesIds = Arrays.asList(1L, 2L);
+        List<Long> tecnologiasIds = Arrays.asList(10L, 20L);
         LocalDate fecha = LocalDate.now();
         Bootcamp bootcamp = Bootcamp.builder()
                 .id(1L)
@@ -22,6 +23,7 @@ class BootcampTest {
                 .fechaLanzamiento(fecha)
                 .duracion(12)
                 .capacidadesIds(capacidadesIds)
+                .tecnologiasIds(tecnologiasIds)
                 .build();
 
         assertEquals(1L, bootcamp.getId());
@@ -30,6 +32,7 @@ class BootcampTest {
         assertEquals(fecha, bootcamp.getFechaLanzamiento());
         assertEquals(12, bootcamp.getDuracion());
         assertEquals(capacidadesIds, bootcamp.getCapacidadesIds());
+        assertEquals(tecnologiasIds, bootcamp.getTecnologiasIds());
     }
 
     @Test
@@ -42,6 +45,7 @@ class BootcampTest {
         assertNull(bootcamp.getFechaLanzamiento());
         assertNull(bootcamp.getDuracion());
         assertNull(bootcamp.getCapacidadesIds());
+        assertNull(bootcamp.getTecnologiasIds());
     }
 
     @Test
@@ -54,13 +58,15 @@ class BootcampTest {
         assertNull(bootcamp.getFechaLanzamiento());
         assertNull(bootcamp.getDuracion());
         assertNull(bootcamp.getCapacidadesIds());
+        assertNull(bootcamp.getTecnologiasIds());
     }
 
     @Test
     void allArgsConstructor_DeberiaCrearInstanciaConTodosLosParametros() {
         LocalDate fecha = LocalDate.now();
         List<Long> capacidadesIds = Arrays.asList(1L, 2L, 3L);
-        Bootcamp bootcamp = new Bootcamp(1L, "Bootcamp Python", "Bootcamp de Python", fecha, 10, capacidadesIds);
+        List<Long> tecnologiasIds = Arrays.asList(10L, 20L);
+        Bootcamp bootcamp = new Bootcamp(1L, "Bootcamp Python", "Bootcamp de Python", fecha, 10, capacidadesIds, tecnologiasIds);
 
         assertEquals(1L, bootcamp.getId());
         assertEquals("Bootcamp Python", bootcamp.getNombre());
@@ -68,6 +74,7 @@ class BootcampTest {
         assertEquals(fecha, bootcamp.getFechaLanzamiento());
         assertEquals(10, bootcamp.getDuracion());
         assertEquals(capacidadesIds, bootcamp.getCapacidadesIds());
+        assertEquals(tecnologiasIds, bootcamp.getTecnologiasIds());
     }
 
     @Test
@@ -100,6 +107,7 @@ class BootcampTest {
         Bootcamp bootcamp = new Bootcamp();
         LocalDate fecha = LocalDate.now();
         List<Long> capacidadesIds = Arrays.asList(1L, 2L);
+        List<Long> tecnologiasIds = Arrays.asList(10L, 20L);
 
         bootcamp.setId(2L);
         bootcamp.setNombre("Bootcamp React");
@@ -107,6 +115,7 @@ class BootcampTest {
         bootcamp.setFechaLanzamiento(fecha);
         bootcamp.setDuracion(8);
         bootcamp.setCapacidadesIds(capacidadesIds);
+        bootcamp.setTecnologiasIds(tecnologiasIds);
 
         assertEquals(2L, bootcamp.getId());
         assertEquals("Bootcamp React", bootcamp.getNombre());
@@ -114,6 +123,7 @@ class BootcampTest {
         assertEquals(fecha, bootcamp.getFechaLanzamiento());
         assertEquals(8, bootcamp.getDuracion());
         assertEquals(capacidadesIds, bootcamp.getCapacidadesIds());
+        assertEquals(tecnologiasIds, bootcamp.getTecnologiasIds());
     }
 
     @Test
@@ -122,10 +132,13 @@ class BootcampTest {
                 .id(1L)
                 .nombre("Test")
                 .capacidadesIds(Collections.emptyList())
+                .tecnologiasIds(Collections.emptyList())
                 .build();
 
         assertNotNull(bootcamp.getCapacidadesIds());
         assertTrue(bootcamp.getCapacidadesIds().isEmpty());
+        assertNotNull(bootcamp.getTecnologiasIds());
+        assertTrue(bootcamp.getTecnologiasIds().isEmpty());
     }
 }
 

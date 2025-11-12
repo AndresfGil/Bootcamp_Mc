@@ -104,6 +104,41 @@ public interface BootcampControllerDocs {
                                     )
                             }
                     )
+            ),
+            @RouterOperation(
+                    path = "/api/bootcamp/{id}",
+                    produces = MediaType.APPLICATION_JSON_VALUE,
+                    method = RequestMethod.DELETE,
+                    beanClass = BootcampHandler.class,
+                    beanMethod = "listenEliminarBootcamp",
+                    operation = @Operation(
+                            operationId = "eliminarBootcamp",
+                            summary = "Eliminar bootcamp",
+                            description = "Elimina un bootcamp del sistema utilizando el patrón Saga. El proceso desactiva primero las tecnologías asociadas a las capacidades del bootcamp, luego desactiva las capacidades, y finalmente elimina el bootcamp. Si ocurre un error en cualquier etapa, se realiza rollback reactivando los recursos desactivados.",
+                            parameters = {
+                                    @Parameter(
+                                            name = "id",
+                                            description = "ID del bootcamp a eliminar",
+                                            in = ParameterIn.PATH,
+                                            required = true,
+                                            schema = @Schema(type = "string", example = "1")
+                                    )
+                            },
+                            responses = {
+                                    @ApiResponse(
+                                            responseCode = "204",
+                                            description = "Bootcamp eliminado exitosamente"
+                                    ),
+                                    @ApiResponse(
+                                            responseCode = "404",
+                                            description = "Bootcamp no encontrado"
+                                    ),
+                                    @ApiResponse(
+                                            responseCode = "500",
+                                            description = "Error interno del servidor. Si ocurre un error durante la saga, se realiza rollback automático."
+                                    )
+                            }
+                    )
             )
     })
     public RouterFunction<ServerResponse> routerFunction(BootcampHandler handler);

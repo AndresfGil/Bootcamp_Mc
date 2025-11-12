@@ -1,15 +1,18 @@
 package co.com.bootcamp.consumer;
 
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 @Service
-@RequiredArgsConstructor
 public class RestConsumer /* implements Gateway from domain */{
     private final WebClient client;
+
+    public RestConsumer(@Qualifier("getWebClient") WebClient client) {
+        this.client = client;
+    }
 
 
     // these methods are an example that illustrates the implementation of WebClient.

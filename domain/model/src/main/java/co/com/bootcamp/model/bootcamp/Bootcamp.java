@@ -19,5 +19,6 @@ public class Bootcamp {
     private LocalDate fechaLanzamiento;
     private Integer duracion;
     private List<Long> capacidadesIds;
+    private List<Long> tecnologiasIds;
 
 }
