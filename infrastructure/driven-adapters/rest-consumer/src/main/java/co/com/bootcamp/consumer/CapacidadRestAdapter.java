@@ -5,25 +5,29 @@ import co.com.bootcamp.consumer.dto.CapacidadBatchResponseDto;
 import co.com.bootcamp.model.bootcamp.gateways.CapacidadGateway;
 import co.com.bootcamp.model.bootcamp.gateways.CapacidadInfo;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 
 @Repository
-@RequiredArgsConstructor
 public class CapacidadRestAdapter implements CapacidadGateway {
 
-    private final WebClient client;
+    private final WebClient capacidadWebClient;
+
+    public CapacidadRestAdapter(@Qualifier("capacidadWebClient") WebClient capacidadWebClient) {
+        this.capacidadWebClient = capacidadWebClient;
+    }
 
     @Override
     @CircuitBreaker(name = "obtenerCapacidadesPorIds")
     public Flux<CapacidadInfo> obtenerCapacidadesPorIds(List<Long> ids) {
         CapacidadBatchRequestDto request = new CapacidadBatchRequestDto(ids);
 
-        return client.post()
+        return capacidadWebClient.post()
                 .uri("/api/capacidad/batch")
                 .bodyValue(request)
                 .retrieve()
@@ -34,5 +38,49 @@ public class CapacidadRestAdapter implements CapacidadGateway {
                         .tecnologias(dto.tecnologias() != null ? dto.tecnologias() : List.of())
                         .build())
                 .onErrorMap(throwable -> new RuntimeException("Error al consultar capacidades: " + throwable.getMessage(), throwable));
+    }
+
+    @Override
+    @CircuitBreaker(name = "desactivarCapacidades")
+    public Mono<Void> desactivarCapacidades(List<String> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return Mono.empty();
+        }
+        
+        List<Long> idsLong = ids.stream()
+                .map(Long::parseLong)
+                .toList();
+        
+        CapacidadBatchRequestDto request = new CapacidadBatchRequestDto(idsLong);
+        
+        return capacidadWebClient.patch()
+                .uri("/api/capacidad/desactivar")
+                .bodyValue(request)
+                .retrieve()
+                .toBodilessEntity()
+                .then()
+                .onErrorMap(error -> new RuntimeException("Error al desactivar capacidades: " + error.getMessage(), error));
+    }
+
+    @Override
+    @CircuitBreaker(name = "activarCapacidades")
+    public Mono<Void> activarCapacidades(List<String> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return Mono.empty();
+        }
+        
+        List<Long> idsLong = ids.stream()
+                .map(Long::parseLong)
+                .toList();
+        
+        CapacidadBatchRequestDto request = new CapacidadBatchRequestDto(idsLong);
+        
+        return capacidadWebClient.patch()
+                .uri("/api/capacidad/activar")
+                .bodyValue(request)
+                .retrieve()
+                .toBodilessEntity()
+                .then()
+                .onErrorMap(error -> new RuntimeException("Error al activar capacidades: " + error.getMessage(), error));
     }
 }

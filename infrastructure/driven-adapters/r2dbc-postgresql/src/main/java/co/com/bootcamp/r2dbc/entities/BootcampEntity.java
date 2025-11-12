@@ -30,4 +30,7 @@ public class BootcampEntity {
     @Column("capacidades_ids")
     private String capacidadesIds;
 
+    @Column("tecnologias_ids")
+    private String tecnologiasIds;
+
 }

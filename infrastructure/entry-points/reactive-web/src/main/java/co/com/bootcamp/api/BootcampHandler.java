@@ -56,8 +56,16 @@ public class BootcampHandler {
                         ))
                         .map(bootcampMapper::toPageResponseDto)
                         .flatMap(response -> ServerResponse
-                                .status(HttpStatus.OK)
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .bodyValue(response)));
+                        .status(HttpStatus.OK)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .bodyValue(response)));
+    }
+
+    public Mono<ServerResponse> listenEliminarBootcamp(ServerRequest req) {
+        String bootcampId = req.pathVariable("id");
+        return bootcampUseCase.eliminarBootcamp(bootcampId)
+                .then(ServerResponse
+                        .status(HttpStatus.NO_CONTENT)
+                        .build());
     }
 }

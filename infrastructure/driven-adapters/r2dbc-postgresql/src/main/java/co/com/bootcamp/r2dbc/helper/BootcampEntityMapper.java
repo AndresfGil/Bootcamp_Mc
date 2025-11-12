@@ -34,8 +34,13 @@ public class BootcampEntityMapper {
                     bootcamp.getCapacidadesIds() != null ? bootcamp.getCapacidadesIds() : Collections.emptyList()
             );
             entity.setCapacidadesIds(capacidadesJson);
+            
+            String tecnologiasJson = jsonMapper.writeValueAsString(
+                    bootcamp.getTecnologiasIds() != null ? bootcamp.getTecnologiasIds() : Collections.emptyList()
+            );
+            entity.setTecnologiasIds(tecnologiasJson);
         } catch (Exception e) {
-            throw new RuntimeException("Error al convertir capacidadesIds a JSON", e);
+            throw new RuntimeException("Error al convertir IDs a JSON", e);
         }
 
         return entity;
@@ -58,10 +63,19 @@ public class BootcampEntityMapper {
                     ? jsonMapper.readValue(entity.getCapacidadesIds(), new TypeReference<List<Long>>() {})
                     : Collections.emptyList();
             bootcamp.setCapacidadesIds(capacidadesIds);
+            
+            List<Long> tecnologiasIds = entity.getTecnologiasIds() != null && !entity.getTecnologiasIds().isEmpty()
+                    ? jsonMapper.readValue(entity.getTecnologiasIds(), new TypeReference<List<Long>>() {})
+                    : Collections.emptyList();
+            bootcamp.setTecnologiasIds(tecnologiasIds);
         } catch (Exception e) {
-            throw new RuntimeException("Error al convertir JSON a capacidadesIds", e);
+            throw new RuntimeException("Error al convertir JSON a IDs", e);
         }
 
         return bootcamp;
+    }
+
+    public com.fasterxml.jackson.databind.ObjectMapper getJsonMapper() {
+        return jsonMapper;
     }
 }

@@ -4,6 +4,8 @@ import co.com.bootcamp.model.bootcamp.Bootcamp;
 import co.com.bootcamp.model.bootcamp.page.CustomPage;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
+
 public interface BootcampRepository {
 
     Mono<Bootcamp> guardarBootcamp(Bootcamp bootcamp);
@@ -14,4 +16,12 @@ public interface BootcampRepository {
             String sortBy,
             String sortDirection
     );
+    
+    Mono<Bootcamp> obtenerBootcampPorId(Long id);
+    
+    Mono<Void> eliminarBootcamp(Long id);
+    
+    Mono<List<Long>> obtenerCapacidadesReferenciadasPorOtrosBootcamps(List<Long> capacidadIds, Long bootcampIdExcluir);
+    
+    Mono<List<Long>> obtenerTecnologiasReferenciadasPorOtrosBootcamps(List<Long> tecnologiaIds, Long bootcampIdExcluir);
 }
