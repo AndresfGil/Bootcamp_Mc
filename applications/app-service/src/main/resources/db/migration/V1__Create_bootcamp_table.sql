@@ -1,5 +1,4 @@
--- Migración Flyway V1: Crear tabla de bootcamp
--- Base de datos: bootcamp
+
 
 CREATE TABLE IF NOT EXISTS `bootcamp` (
     `id` BIGINT AUTO_INCREMENT PRIMARY KEY,

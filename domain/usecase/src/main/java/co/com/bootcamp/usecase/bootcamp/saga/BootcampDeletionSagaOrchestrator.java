@@ -1,6 +1,7 @@
 package co.com.bootcamp.usecase.bootcamp.saga;
 
 import co.com.bootcamp.model.bootcamp.exception.BootcampEliminacionFallidaException;
+import co.com.bootcamp.model.bootcamp.exception.BootcampNoEncontrado;
 import co.com.bootcamp.model.bootcamp.gateways.BootcampRepository;
 import co.com.bootcamp.model.bootcamp.gateways.CapacidadGateway;
 import co.com.bootcamp.model.bootcamp.gateways.TecnologiaGateway;
@@ -24,7 +25,9 @@ public class BootcampDeletionSagaOrchestrator {
         Long id = Long.parseLong(bootcampId);
         
         return bootcampRepository.obtenerBootcampPorId(id)
-                .switchIfEmpty(Mono.error(new RuntimeException("Bootcamp no encontrado con ID: " + bootcampId)))
+                .switchIfEmpty(Mono.error(new BootcampNoEncontrado(
+                        "No se pudo encontrar bootcamp por ID. "
+                )))
                 .flatMap(bootcamp -> {
                     List<Long> capacidadIds = bootcamp.getCapacidadesIds();
                     List<Long> tecnologiaIds = bootcamp.getTecnologiasIds();

@@ -24,4 +24,8 @@ public interface BootcampRepository {
     Mono<List<Long>> obtenerCapacidadesReferenciadasPorOtrosBootcamps(List<Long> capacidadIds, Long bootcampIdExcluir);
     
     Mono<List<Long>> obtenerTecnologiasReferenciadasPorOtrosBootcamps(List<Long> tecnologiaIds, Long bootcampIdExcluir);
+    
+    Mono<Void> guardarRelacionesCapacidades(Long bootcampId, List<Long> capacidadIds);
+    
+    Mono<Void> guardarRelacionesTecnologias(Long bootcampId, List<Long> tecnologiaIds);
 }

@@ -28,7 +28,16 @@ public class BootcampUseCase {
         return BootcampValidator.validarCantidadCapacidades(bootcamp.getCapacidadesIds())
                 .then(capacidadValidatorService.validarCapacidadesExisten(bootcamp.getCapacidadesIds()))
                 .then(calcularTecnologiasIds(bootcamp))
-                .flatMap(b -> bootcampRepository.guardarBootcamp(b));
+                .flatMap(b -> bootcampRepository.guardarBootcamp(b)
+                        .flatMap(bootcampGuardado -> bootcampRepository.guardarRelacionesCapacidades(
+                                bootcampGuardado.getId(),
+                                bootcampGuardado.getCapacidadesIds()
+                        )
+                        .then(bootcampRepository.guardarRelacionesTecnologias(
+                                bootcampGuardado.getId(),
+                                bootcampGuardado.getTecnologiasIds()
+                        ))
+                        .thenReturn(bootcampGuardado)));
     }
 
     private Mono<Bootcamp> calcularTecnologiasIds(Bootcamp bootcamp) {
