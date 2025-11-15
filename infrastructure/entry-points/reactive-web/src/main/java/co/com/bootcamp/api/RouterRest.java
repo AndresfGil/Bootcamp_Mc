@@ -19,6 +19,7 @@ public class RouterRest implements BootcampControllerDocs {
     public RouterFunction<ServerResponse> routerFunction(BootcampHandler handler) {
         return route(POST("/api/bootcamp"), handler::listenGuardarBootcamp)
                 .andRoute(GET("/api/bootcamp"), handler::listenListarBootcamps)
+                .andRoute(POST("/api/inscripcion"), handler::listenRegistrarInscripcion)
                 .andRoute(DELETE("/api/bootcamp/{id}"), handler::listenEliminarBootcamp);
     }
 }

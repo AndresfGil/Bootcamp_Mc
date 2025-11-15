@@ -20,15 +20,18 @@ public class RestConsumerConfig {
     private final String url;
     private final String capacidadUrl;
     private final String tecnologiaUrl;
+    private final String personaUrl;
     private final int timeout;
 
     public RestConsumerConfig(@Value("${adapters.restconsumer.url}") String url,
                               @Value("${adapters.restconsumer.capacidad-url}") String capacidadUrl,
                               @Value("${adapters.restconsumer.tecnologia-url}") String tecnologiaUrl,
+                              @Value("${adapters.restconsumer.persona-url}") String personaUrl,
                               @Value("${adapters.restconsumer.timeout}") int timeout) {
         this.url = url;
         this.capacidadUrl = capacidadUrl;
         this.tecnologiaUrl = tecnologiaUrl;
+        this.personaUrl = personaUrl;
         this.timeout = timeout;
     }
 
@@ -54,6 +57,15 @@ public class RestConsumerConfig {
     public WebClient getTecnologiaWebClient(WebClient.Builder builder) {
         return builder
             .baseUrl(tecnologiaUrl)
+            .defaultHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+            .clientConnector(getClientHttpConnector())
+            .build();
+    }
+
+    @Bean("personaWebClient")
+    public WebClient getPersonaWebClient(WebClient.Builder builder) {
+        return builder
+            .baseUrl(personaUrl)
             .defaultHeader(HttpHeaders.CONTENT_TYPE, "application/json")
             .clientConnector(getClientHttpConnector())
             .build();

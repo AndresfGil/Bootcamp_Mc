@@ -1,6 +1,6 @@
 package co.com.bootcamp.r2dbc.helper;
 
-import co.com.bootcamp.model.bootcamp.Bootcamp;
+import co.com.bootcamp.model.bootcamp.bootcamp.Bootcamp;
 import co.com.bootcamp.r2dbc.entities.BootcampEntity;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.springframework.stereotype.Component;

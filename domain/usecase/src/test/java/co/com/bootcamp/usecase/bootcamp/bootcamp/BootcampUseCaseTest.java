@@ -1,7 +1,9 @@
 package co.com.bootcamp.usecase.bootcamp.bootcamp;
 
-import co.com.bootcamp.model.bootcamp.Bootcamp;
-import co.com.bootcamp.model.bootcamp.BootcampConCapacidades;
+import co.com.bootcamp.model.bootcamp.bootcamp.Bootcamp;
+import co.com.bootcamp.model.bootcamp.bootcamp.BootcampConCapacidades;
+import co.com.bootcamp.model.bootcamp.exception.CapacidadesInvalidasException;
+import co.com.bootcamp.model.bootcamp.exception.CapacidadNoEncontradaException;
 import co.com.bootcamp.model.bootcamp.gateways.BootcampRepository;
 import co.com.bootcamp.model.bootcamp.gateways.CapacidadGateway;
 import co.com.bootcamp.model.bootcamp.gateways.CapacidadInfo;
@@ -23,8 +25,11 @@ import reactor.test.StepVerifier;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -52,12 +57,16 @@ class BootcampUseCaseTest {
 
     private Bootcamp bootcamp;
     private Bootcamp bootcampGuardado;
+    private CapacidadInfo capacidadInfo1;
+    private CapacidadInfo capacidadInfo2;
+    private TecnologiaInfo tecnologiaInfo1;
+    private TecnologiaInfo tecnologiaInfo2;
 
     @BeforeEach
     void setUp() {
         bootcamp = Bootcamp.builder()
-                .nombre("Bootcamp Java Full Stack")
-                .descripcion("Bootcamp completo de desarrollo Java")
+                .nombre("Bootcamp Java")
+                .descripcion("Bootcamp completo de Java")
                 .fechaLanzamiento(LocalDate.now().plusDays(30))
                 .duracion(12)
                 .capacidadesIds(Arrays.asList(1L, 2L))
@@ -65,343 +74,143 @@ class BootcampUseCaseTest {
 
         bootcampGuardado = Bootcamp.builder()
                 .id(1L)
-                .nombre("Bootcamp Java Full Stack")
-                .descripcion("Bootcamp completo de desarrollo Java")
+                .nombre("Bootcamp Java")
+                .descripcion("Bootcamp completo de Java")
                 .fechaLanzamiento(LocalDate.now().plusDays(30))
                 .duracion(12)
                 .capacidadesIds(Arrays.asList(1L, 2L))
+                .tecnologiasIds(Arrays.asList(10L, 20L))
+                .build();
+
+        tecnologiaInfo1 = new TecnologiaInfo(10L, "Java");
+        tecnologiaInfo2 = new TecnologiaInfo(20L, "Spring");
+
+        capacidadInfo1 = CapacidadInfo.builder()
+                .id(1L)
+                .nombre("Backend")
+                .tecnologias(Arrays.asList(tecnologiaInfo1, tecnologiaInfo2))
+                .build();
+
+        capacidadInfo2 = CapacidadInfo.builder()
+                .id(2L)
+                .nombre("Frontend")
+                .tecnologias(Collections.singletonList(tecnologiaInfo1))
                 .build();
     }
 
     @Test
     void guardarBootcamp_CuandoDatosValidos_DeberiaGuardarExitosamente() {
-        TecnologiaInfo tecnologia1 = new TecnologiaInfo(10L, "Java");
-        TecnologiaInfo tecnologia2 = new TecnologiaInfo(20L, "Spring");
-        CapacidadInfo capacidad1 = CapacidadInfo.builder()
-                .id(1L)
-                .nombre("Backend")
-                .tecnologias(Arrays.asList(tecnologia1, tecnologia2))
-                .build();
-        CapacidadInfo capacidad2 = CapacidadInfo.builder()
-                .id(2L)
-                .nombre("Frontend")
-                .tecnologias(Collections.singletonList(tecnologia1))
-                .build();
-
-        bootcampGuardado.setTecnologiasIds(Arrays.asList(10L, 20L));
-
-        when(capacidadValidatorService.validarCapacidadesExisten(any())).thenReturn(Mono.empty());
+        when(capacidadValidatorService.validarCapacidadesExisten(anyList())).thenReturn(Mono.empty());
         when(capacidadGateway.obtenerCapacidadesPorIds(bootcamp.getCapacidadesIds()))
-                .thenReturn(Flux.just(capacidad1, capacidad2));
+                .thenReturn(Flux.just(capacidadInfo1, capacidadInfo2));
         when(bootcampRepository.guardarBootcamp(any(Bootcamp.class))).thenReturn(Mono.just(bootcampGuardado));
+        when(bootcampRepository.guardarRelacionesCapacidades(anyLong(), anyList())).thenReturn(Mono.empty());
+        when(bootcampRepository.guardarRelacionesTecnologias(anyLong(), anyList())).thenReturn(Mono.empty());
 
         StepVerifier.create(bootcampUseCase.guardarBootcamp(bootcamp))
-                .expectNext(bootcampGuardado)
+                .expectNextMatches(b -> b.getId().equals(1L) && b.getTecnologiasIds().size() == 2)
                 .verifyComplete();
 
         verify(capacidadValidatorService).validarCapacidadesExisten(bootcamp.getCapacidadesIds());
         verify(capacidadGateway).obtenerCapacidadesPorIds(bootcamp.getCapacidadesIds());
         verify(bootcampRepository).guardarBootcamp(any(Bootcamp.class));
+        verify(bootcampRepository).guardarRelacionesCapacidades(1L, bootcamp.getCapacidadesIds());
+        verify(bootcampRepository).guardarRelacionesTecnologias(1L, Arrays.asList(10L, 20L));
     }
 
 
 
     @Test
-    void guardarBootcamp_CuandoExactamenteCuatroCapacidades_DeberiaGuardarExitosamente() {
-        bootcamp.setCapacidadesIds(Arrays.asList(1L, 2L, 3L, 4L));
-        bootcampGuardado.setCapacidadesIds(Arrays.asList(1L, 2L, 3L, 4L));
-        bootcampGuardado.setTecnologiasIds(Arrays.asList(10L, 20L));
-
-        TecnologiaInfo tecnologia = new TecnologiaInfo(10L, "Java");
-        CapacidadInfo capacidad = CapacidadInfo.builder()
-                .id(1L)
-                .tecnologias(Collections.singletonList(tecnologia))
+    void guardarBootcamp_CuandoCapacidadesNoExisten_DeberiaLanzarExcepcion() {
+        Bootcamp bootcampTest = Bootcamp.builder()
+                .nombre("Bootcamp Java")
+                .descripcion("Bootcamp completo de Java")
+                .fechaLanzamiento(LocalDate.now().plusDays(30))
+                .duracion(12)
+                .capacidadesIds(Arrays.asList(99L))
                 .build();
 
-        when(capacidadValidatorService.validarCapacidadesExisten(any())).thenReturn(Mono.empty());
-        when(capacidadGateway.obtenerCapacidadesPorIds(any())).thenReturn(Flux.just(capacidad));
-        when(bootcampRepository.guardarBootcamp(any(Bootcamp.class))).thenReturn(Mono.just(bootcampGuardado));
+        when(capacidadValidatorService.validarCapacidadesExisten(anyList()))
+                .thenReturn(Mono.error(new CapacidadNoEncontradaException(Arrays.asList(99L))));
+        when(capacidadGateway.obtenerCapacidadesPorIds(anyList()))
+                .thenReturn(Flux.empty());
 
-        StepVerifier.create(bootcampUseCase.guardarBootcamp(bootcamp))
-                .expectNext(bootcampGuardado)
-                .verifyComplete();
-
-        verify(bootcampRepository).guardarBootcamp(any(Bootcamp.class));
-    }
-
-    @Test
-    void guardarBootcamp_CuandoUnaSolaCapacidad_DeberiaGuardarExitosamente() {
-        bootcamp.setCapacidadesIds(Collections.singletonList(1L));
-        bootcampGuardado.setCapacidadesIds(Collections.singletonList(1L));
-        bootcampGuardado.setTecnologiasIds(Collections.singletonList(10L));
-
-        TecnologiaInfo tecnologia = new TecnologiaInfo(10L, "Java");
-        CapacidadInfo capacidad = CapacidadInfo.builder()
-                .id(1L)
-                .tecnologias(Collections.singletonList(tecnologia))
-                .build();
-
-        when(capacidadValidatorService.validarCapacidadesExisten(any())).thenReturn(Mono.empty());
-        when(capacidadGateway.obtenerCapacidadesPorIds(any())).thenReturn(Flux.just(capacidad));
-        when(bootcampRepository.guardarBootcamp(any(Bootcamp.class))).thenReturn(Mono.just(bootcampGuardado));
-
-        StepVerifier.create(bootcampUseCase.guardarBootcamp(bootcamp))
-                .expectNext(bootcampGuardado)
-                .verifyComplete();
-
-        verify(bootcampRepository).guardarBootcamp(any(Bootcamp.class));
-    }
-
-    @Test
-    void guardarBootcamp_CuandoRepositorioRetornaError_DeberiaPropagarError() {
-        RuntimeException error = new RuntimeException("Error de base de datos");
-        TecnologiaInfo tecnologia = new TecnologiaInfo(10L, "Java");
-        CapacidadInfo capacidad = CapacidadInfo.builder()
-                .id(1L)
-                .tecnologias(Collections.singletonList(tecnologia))
-                .build();
-
-        when(capacidadValidatorService.validarCapacidadesExisten(any())).thenReturn(Mono.empty());
-        when(capacidadGateway.obtenerCapacidadesPorIds(any())).thenReturn(Flux.just(capacidad));
-        when(bootcampRepository.guardarBootcamp(any(Bootcamp.class))).thenReturn(Mono.error(error));
-
-        StepVerifier.create(bootcampUseCase.guardarBootcamp(bootcamp))
-                .expectError(RuntimeException.class)
+        StepVerifier.create(bootcampUseCase.guardarBootcamp(bootcampTest))
+                .expectError(CapacidadNoEncontradaException.class)
                 .verify();
 
-        verify(bootcampRepository).guardarBootcamp(any(Bootcamp.class));
+        verify(capacidadValidatorService).validarCapacidadesExisten(bootcampTest.getCapacidadesIds());
+        verify(bootcampRepository, never()).guardarBootcamp(any(Bootcamp.class));
     }
 
-    @Test
-    void guardarBootcamp_CuandoBootcampSinId_DeberiaGuardarExitosamente() {
-        bootcamp.setId(null);
-        TecnologiaInfo tecnologia1 = new TecnologiaInfo(10L, "Java");
-        TecnologiaInfo tecnologia2 = new TecnologiaInfo(20L, "Spring");
-        CapacidadInfo capacidad1 = CapacidadInfo.builder()
-                .id(1L)
-                .tecnologias(Collections.singletonList(tecnologia1))
-                .build();
-        CapacidadInfo capacidad2 = CapacidadInfo.builder()
-                .id(2L)
-                .tecnologias(Collections.singletonList(tecnologia2))
-                .build();
-
-        bootcampGuardado.setTecnologiasIds(Arrays.asList(10L, 20L));
-
-        when(capacidadValidatorService.validarCapacidadesExisten(any())).thenReturn(Mono.empty());
-        when(capacidadGateway.obtenerCapacidadesPorIds(bootcamp.getCapacidadesIds()))
-                .thenReturn(Flux.just(capacidad1, capacidad2));
-        when(bootcampRepository.guardarBootcamp(any(Bootcamp.class))).thenReturn(Mono.just(bootcampGuardado));
-
-        StepVerifier.create(bootcampUseCase.guardarBootcamp(bootcamp))
-                .expectNext(bootcampGuardado)
-                .verifyComplete();
-
-        verify(capacidadGateway).obtenerCapacidadesPorIds(bootcamp.getCapacidadesIds());
-        verify(bootcampRepository).guardarBootcamp(any(Bootcamp.class));
-    }
-
-    @Test
-    void guardarBootcamp_CuandoBootcampSinNombre_DeberiaGuardarExitosamente() {
-        bootcamp.setNombre(null);
-        bootcampGuardado.setNombre(null);
-        TecnologiaInfo tecnologia1 = new TecnologiaInfo(10L, "Java");
-        TecnologiaInfo tecnologia2 = new TecnologiaInfo(20L, "Spring");
-        CapacidadInfo capacidad1 = CapacidadInfo.builder()
-                .id(1L)
-                .tecnologias(Collections.singletonList(tecnologia1))
-                .build();
-        CapacidadInfo capacidad2 = CapacidadInfo.builder()
-                .id(2L)
-                .tecnologias(Collections.singletonList(tecnologia2))
-                .build();
-
-        bootcampGuardado.setTecnologiasIds(Arrays.asList(10L, 20L));
-
-        when(capacidadValidatorService.validarCapacidadesExisten(any())).thenReturn(Mono.empty());
-        when(capacidadGateway.obtenerCapacidadesPorIds(bootcamp.getCapacidadesIds()))
-                .thenReturn(Flux.just(capacidad1, capacidad2));
-        when(bootcampRepository.guardarBootcamp(any(Bootcamp.class))).thenReturn(Mono.just(bootcampGuardado));
-
-        StepVerifier.create(bootcampUseCase.guardarBootcamp(bootcamp))
-                .expectNext(bootcampGuardado)
-                .verifyComplete();
-
-        verify(capacidadGateway).obtenerCapacidadesPorIds(bootcamp.getCapacidadesIds());
-        verify(bootcampRepository).guardarBootcamp(any(Bootcamp.class));
-    }
-
-    @Test
-    void guardarBootcamp_CuandoTresCapacidades_DeberiaGuardarExitosamente() {
-        bootcamp.setCapacidadesIds(Arrays.asList(1L, 2L, 3L));
-        bootcampGuardado.setCapacidadesIds(Arrays.asList(1L, 2L, 3L));
-        bootcampGuardado.setTecnologiasIds(Arrays.asList(10L, 20L));
-
-        TecnologiaInfo tecnologia1 = new TecnologiaInfo(10L, "Java");
-        TecnologiaInfo tecnologia2 = new TecnologiaInfo(20L, "Spring");
-        CapacidadInfo capacidad1 = CapacidadInfo.builder()
-                .id(1L)
-                .tecnologias(Collections.singletonList(tecnologia1))
-                .build();
-        CapacidadInfo capacidad2 = CapacidadInfo.builder()
-                .id(2L)
-                .tecnologias(Collections.singletonList(tecnologia2))
-                .build();
-        CapacidadInfo capacidad3 = CapacidadInfo.builder()
-                .id(3L)
-                .tecnologias(Collections.singletonList(tecnologia1))
-                .build();
-
-        when(capacidadValidatorService.validarCapacidadesExisten(any())).thenReturn(Mono.empty());
-        when(capacidadGateway.obtenerCapacidadesPorIds(any())).thenReturn(Flux.just(capacidad1, capacidad2, capacidad3));
-        when(bootcampRepository.guardarBootcamp(any(Bootcamp.class))).thenReturn(Mono.just(bootcampGuardado));
-
-        StepVerifier.create(bootcampUseCase.guardarBootcamp(bootcamp))
-                .expectNext(bootcampGuardado)
-                .verifyComplete();
-
-        verify(bootcampRepository).guardarBootcamp(any(Bootcamp.class));
-    }
-
-    @Test
-    void guardarBootcamp_CuandoBootcampSinDescripcion_DeberiaGuardarExitosamente() {
-        bootcamp.setDescripcion(null);
-        bootcampGuardado.setDescripcion(null);
-        TecnologiaInfo tecnologia = new TecnologiaInfo(10L, "Java");
-        CapacidadInfo capacidad = CapacidadInfo.builder()
-                .id(1L)
-                .tecnologias(Collections.singletonList(tecnologia))
-                .build();
-
-        when(capacidadValidatorService.validarCapacidadesExisten(any())).thenReturn(Mono.empty());
-        when(capacidadGateway.obtenerCapacidadesPorIds(any())).thenReturn(Flux.just(capacidad));
-        when(bootcampRepository.guardarBootcamp(any(Bootcamp.class))).thenReturn(Mono.just(bootcampGuardado));
-
-        StepVerifier.create(bootcampUseCase.guardarBootcamp(bootcamp))
-                .expectNext(bootcampGuardado)
-                .verifyComplete();
-
-        verify(bootcampRepository).guardarBootcamp(any(Bootcamp.class));
-    }
-
-    @Test
-    void guardarBootcamp_CuandoBootcampSinFechaLanzamiento_DeberiaGuardarExitosamente() {
-        bootcamp.setFechaLanzamiento(null);
-        bootcampGuardado.setFechaLanzamiento(null);
-        TecnologiaInfo tecnologia = new TecnologiaInfo(10L, "Java");
-        CapacidadInfo capacidad = CapacidadInfo.builder()
-                .id(1L)
-                .tecnologias(Collections.singletonList(tecnologia))
-                .build();
-
-        when(capacidadValidatorService.validarCapacidadesExisten(any())).thenReturn(Mono.empty());
-        when(capacidadGateway.obtenerCapacidadesPorIds(any())).thenReturn(Flux.just(capacidad));
-        when(bootcampRepository.guardarBootcamp(any(Bootcamp.class))).thenReturn(Mono.just(bootcampGuardado));
-
-        StepVerifier.create(bootcampUseCase.guardarBootcamp(bootcamp))
-                .expectNext(bootcampGuardado)
-                .verifyComplete();
-
-        verify(bootcampRepository).guardarBootcamp(any(Bootcamp.class));
-    }
-
-    @Test
-    void guardarBootcamp_CuandoBootcampSinDuracion_DeberiaGuardarExitosamente() {
-        bootcamp.setDuracion(null);
-        bootcampGuardado.setDuracion(null);
-        TecnologiaInfo tecnologia = new TecnologiaInfo(10L, "Java");
-        CapacidadInfo capacidad = CapacidadInfo.builder()
-                .id(1L)
-                .tecnologias(Collections.singletonList(tecnologia))
-                .build();
-
-        when(capacidadValidatorService.validarCapacidadesExisten(any())).thenReturn(Mono.empty());
-        when(capacidadGateway.obtenerCapacidadesPorIds(any())).thenReturn(Flux.just(capacidad));
-        when(bootcampRepository.guardarBootcamp(any(Bootcamp.class))).thenReturn(Mono.just(bootcampGuardado));
-
-        StepVerifier.create(bootcampUseCase.guardarBootcamp(bootcamp))
-                .expectNext(bootcampGuardado)
-                .verifyComplete();
-
-        verify(bootcampRepository).guardarBootcamp(any(Bootcamp.class));
-    }
-
-
-
-    @Test
-    void guardarBootcamp_CuandoRepositorioRetornaMonoVacio_DeberiaCompletarSinValor() {
-        TecnologiaInfo tecnologia = new TecnologiaInfo(10L, "Java");
-        CapacidadInfo capacidad = CapacidadInfo.builder()
-                .id(1L)
-                .tecnologias(Collections.singletonList(tecnologia))
-                .build();
-
-        when(capacidadValidatorService.validarCapacidadesExisten(any())).thenReturn(Mono.empty());
-        when(capacidadGateway.obtenerCapacidadesPorIds(any())).thenReturn(Flux.just(capacidad));
-        when(bootcampRepository.guardarBootcamp(any(Bootcamp.class))).thenReturn(Mono.empty());
-
-        StepVerifier.create(bootcampUseCase.guardarBootcamp(bootcamp))
-                .verifyComplete();
-
-        verify(bootcampRepository).guardarBootcamp(any(Bootcamp.class));
-    }
-//
-//    @Test
-//    void guardarBootcamp_CuandoCapacidadesIdsEsNull_DeberiaEstablecerTecnologiasIdsVacia() {
-//        bootcamp.setCapacidadesIds(null);
-//        bootcampGuardado.setCapacidadesIds(null);
-//        bootcampGuardado.setTecnologiasIds(Collections.emptyList());
-//
-//        when(capacidadValidatorService.validarCapacidadesExisten(any())).thenReturn(Mono.empty());
-//        when(bootcampRepository.guardarBootcamp(any(Bootcamp.class))).thenReturn(Mono.just(bootcampGuardado));
-//
-//        StepVerifier.create(bootcampUseCase.guardarBootcamp(bootcamp))
-//                .expectNext(bootcampGuardado)
-//                .verifyComplete();
-//
-//        verify(capacidadGateway, never()).obtenerCapacidadesPorIds(any());
-//        verify(bootcampRepository).guardarBootcamp(any(Bootcamp.class));
-//    }
-
-
+    
     @Test
     void guardarBootcamp_CuandoTecnologiasDuplicadas_DeberiaEliminarDuplicados() {
-        TecnologiaInfo tecnologia1 = new TecnologiaInfo(10L, "Java");
-        TecnologiaInfo tecnologia2 = new TecnologiaInfo(20L, "Spring");
-        CapacidadInfo capacidad1 = CapacidadInfo.builder()
+        TecnologiaInfo tecnologiaDuplicada = new TecnologiaInfo(10L, "Java");
+        CapacidadInfo capacidadConDuplicados = CapacidadInfo.builder()
                 .id(1L)
-                .tecnologias(Arrays.asList(tecnologia1, tecnologia2))
-                .build();
-        CapacidadInfo capacidad2 = CapacidadInfo.builder()
-                .id(2L)
-                .tecnologias(Arrays.asList(tecnologia1, tecnologia2))
+                .nombre("Backend")
+                .tecnologias(Arrays.asList(tecnologiaInfo1, tecnologiaDuplicada))
                 .build();
 
-        bootcampGuardado.setTecnologiasIds(Arrays.asList(10L, 20L));
+        Bootcamp bootcampConTecnologias = Bootcamp.builder()
+                .id(1L)
+                .nombre("Bootcamp Java")
+                .descripcion("Bootcamp completo de Java")
+                .fechaLanzamiento(LocalDate.now().plusDays(30))
+                .duracion(12)
+                .capacidadesIds(Collections.singletonList(1L))
+                .tecnologiasIds(Collections.singletonList(10L))
+                .build();
 
-        when(capacidadValidatorService.validarCapacidadesExisten(any())).thenReturn(Mono.empty());
-        when(capacidadGateway.obtenerCapacidadesPorIds(any())).thenReturn(Flux.just(capacidad1, capacidad2));
-        when(bootcampRepository.guardarBootcamp(any(Bootcamp.class))).thenReturn(Mono.just(bootcampGuardado));
+        when(capacidadValidatorService.validarCapacidadesExisten(anyList())).thenReturn(Mono.empty());
+        when(capacidadGateway.obtenerCapacidadesPorIds(Collections.singletonList(1L)))
+                .thenReturn(Flux.just(capacidadConDuplicados));
+        when(bootcampRepository.guardarBootcamp(any(Bootcamp.class))).thenReturn(Mono.just(bootcampConTecnologias));
+        when(bootcampRepository.guardarRelacionesCapacidades(anyLong(), anyList())).thenReturn(Mono.empty());
+        when(bootcampRepository.guardarRelacionesTecnologias(anyLong(), anyList())).thenReturn(Mono.empty());
+
+        bootcamp.setCapacidadesIds(Collections.singletonList(1L));
 
         StepVerifier.create(bootcampUseCase.guardarBootcamp(bootcamp))
-                .expectNext(bootcampGuardado)
+                .expectNextMatches(b -> b.getId().equals(1L) && b.getTecnologiasIds().size() == 1)
                 .verifyComplete();
 
-        verify(bootcampRepository).guardarBootcamp(any(Bootcamp.class));
+        verify(capacidadValidatorService).validarCapacidadesExisten(Collections.singletonList(1L));
+        verify(capacidadGateway).obtenerCapacidadesPorIds(Collections.singletonList(1L));
     }
 
     @Test
-    void guardarBootcamp_CuandoCapacidadGatewayRetornaError_DeberiaPropagarError() {
-        RuntimeException error = new RuntimeException("Error al obtener capacidades");
+    void listarBootcamps_CuandoDatosValidos_DeberiaRetornarLista() {
+        CustomPage<Bootcamp> pageBootcamps = CustomPage.<Bootcamp>builder()
+                .data(Collections.emptyList())
+                .totalRows(0L)
+                .pageSize(10)
+                .pageNum(0)
+                .hasNext(false)
+                .sort("id")
+                .build();
 
-        when(capacidadValidatorService.validarCapacidadesExisten(any())).thenReturn(Mono.empty());
-        when(capacidadGateway.obtenerCapacidadesPorIds(any())).thenReturn(Flux.error(error));
+        CustomPage<BootcampConCapacidades> pageEnriquecida = CustomPage.<BootcampConCapacidades>builder()
+                .data(Collections.emptyList())
+                .totalRows(0L)
+                .pageSize(10)
+                .pageNum(0)
+                .hasNext(false)
+                .sort("id")
+                .build();
 
-        StepVerifier.create(bootcampUseCase.guardarBootcamp(bootcamp))
-                .expectError(RuntimeException.class)
-                .verify();
+        when(bootcampRepository.listarBootcamps(0, 10, "id", "asc"))
+                .thenReturn(Mono.just(pageBootcamps));
+        when(bootcampEnrichmentService.enriquecerBootcampsConCapacidades(any(CustomPage.class)))
+                .thenReturn(Mono.just(pageEnriquecida));
 
-        verify(bootcampRepository, never()).guardarBootcamp(any());
+        StepVerifier.create(bootcampUseCase.listarBootcamps(0, 10, "id", "asc"))
+                .expectNext(pageEnriquecida)
+                .verifyComplete();
+
+        verify(bootcampRepository).listarBootcamps(0, 10, "id", "asc");
+        verify(bootcampEnrichmentService).enriquecerBootcampsConCapacidades(pageBootcamps);
     }
 
     @Test
@@ -417,8 +226,8 @@ class BootcampUseCaseTest {
     }
 
     @Test
-    void eliminarBootcamp_CuandoSagaOrchestratorRetornaError_DeberiaPropagarError() {
-        String bootcampId = "1";
+    void eliminarBootcamp_CuandoIdInvalido_DeberiaPropagarError() {
+        String bootcampId = "999";
         RuntimeException error = new RuntimeException("Error al eliminar bootcamp");
 
         when(sagaOrchestrator.deleteBootcampWithSaga(bootcampId)).thenReturn(Mono.error(error));
@@ -428,100 +237,6 @@ class BootcampUseCaseTest {
                 .verify();
 
         verify(sagaOrchestrator).deleteBootcampWithSaga(bootcampId);
-    }
-
-    @Test
-    void listarBootcamps_CuandoDatosValidos_DeberiaRetornarPaginaEnriquecida() {
-        Bootcamp bootcamp1 = Bootcamp.builder()
-                .id(1L)
-                .nombre("Bootcamp 1")
-                .capacidadesIds(Arrays.asList(1L, 2L))
-                .build();
-        Bootcamp bootcamp2 = Bootcamp.builder()
-                .id(2L)
-                .nombre("Bootcamp 2")
-                .capacidadesIds(Arrays.asList(2L, 3L))
-                .build();
-
-        CustomPage<Bootcamp> pageBootcamps = CustomPage.<Bootcamp>builder()
-                .data(Arrays.asList(bootcamp1, bootcamp2))
-                .totalRows(2L)
-                .pageSize(10)
-                .pageNum(0)
-                .hasNext(false)
-                .build();
-
-        BootcampConCapacidades bootcampEnriquecido1 = BootcampConCapacidades.builder()
-                .id(1L)
-                .nombre("Bootcamp 1")
-                .build();
-        BootcampConCapacidades bootcampEnriquecido2 = BootcampConCapacidades.builder()
-                .id(2L)
-                .nombre("Bootcamp 2")
-                .build();
-
-        CustomPage<BootcampConCapacidades> pageEnriquecida = CustomPage.<BootcampConCapacidades>builder()
-                .data(Arrays.asList(bootcampEnriquecido1, bootcampEnriquecido2))
-                .totalRows(2L)
-                .pageSize(10)
-                .pageNum(0)
-                .hasNext(false)
-                .build();
-
-        when(bootcampRepository.listarBootcamps(0, 10, "nombre", "ASC"))
-                .thenReturn(Mono.just(pageBootcamps));
-        when(bootcampEnrichmentService.enriquecerBootcampsConCapacidades(pageBootcamps))
-                .thenReturn(Mono.just(pageEnriquecida));
-
-        StepVerifier.create(bootcampUseCase.listarBootcamps(0, 10, "nombre", "ASC"))
-                .expectNext(pageEnriquecida)
-                .verifyComplete();
-
-        verify(bootcampRepository).listarBootcamps(0, 10, "nombre", "ASC");
-        verify(bootcampEnrichmentService).enriquecerBootcampsConCapacidades(pageBootcamps);
-    }
-
-    @Test
-    void listarBootcamps_CuandoRepositorioRetornaError_DeberiaPropagarError() {
-        RuntimeException error = new RuntimeException("Error de base de datos");
-        when(bootcampRepository.listarBootcamps(0, 10, "nombre", "ASC"))
-                .thenReturn(Mono.error(error));
-
-        StepVerifier.create(bootcampUseCase.listarBootcamps(0, 10, "nombre", "ASC"))
-                .expectError(RuntimeException.class)
-                .verify();
-
-        verify(bootcampRepository).listarBootcamps(0, 10, "nombre", "ASC");
-        verify(bootcampEnrichmentService, never()).enriquecerBootcampsConCapacidades(any());
-    }
-
-    @Test
-    void listarBootcamps_CuandoEnrichmentServiceRetornaError_DeberiaPropagarError() {
-        Bootcamp bootcamp = Bootcamp.builder()
-                .id(1L)
-                .nombre("Bootcamp 1")
-                .build();
-
-        CustomPage<Bootcamp> pageBootcamps = CustomPage.<Bootcamp>builder()
-                .data(Arrays.asList(bootcamp))
-                .totalRows(1L)
-                .pageSize(10)
-                .pageNum(0)
-                .hasNext(false)
-                .build();
-
-        RuntimeException error = new RuntimeException("Error al enriquecer");
-        when(bootcampRepository.listarBootcamps(0, 10, "nombre", "ASC"))
-                .thenReturn(Mono.just(pageBootcamps));
-        when(bootcampEnrichmentService.enriquecerBootcampsConCapacidades(pageBootcamps))
-                .thenReturn(Mono.error(error));
-
-        StepVerifier.create(bootcampUseCase.listarBootcamps(0, 10, "nombre", "ASC"))
-                .expectError(RuntimeException.class)
-                .verify();
-
-        verify(bootcampRepository).listarBootcamps(0, 10, "nombre", "ASC");
-        verify(bootcampEnrichmentService).enriquecerBootcampsConCapacidades(pageBootcamps);
     }
 }
 

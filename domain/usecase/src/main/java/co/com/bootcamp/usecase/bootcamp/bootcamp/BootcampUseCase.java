@@ -1,7 +1,7 @@
 package co.com.bootcamp.usecase.bootcamp.bootcamp;
 
-import co.com.bootcamp.model.bootcamp.Bootcamp;
-import co.com.bootcamp.model.bootcamp.BootcampConCapacidades;
+import co.com.bootcamp.model.bootcamp.bootcamp.Bootcamp;
+import co.com.bootcamp.model.bootcamp.bootcamp.BootcampConCapacidades;
 import co.com.bootcamp.model.bootcamp.gateways.BootcampRepository;
 import co.com.bootcamp.model.bootcamp.gateways.CapacidadGateway;
 import co.com.bootcamp.model.bootcamp.gateways.CapacidadInfo;
@@ -12,7 +12,6 @@ import co.com.bootcamp.usecase.bootcamp.saga.BootcampDeletionSagaOrchestrator;
 import co.com.bootcamp.usecase.bootcamp.validator.CapacidadValidatorService;
 import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Mono;
-
 import java.util.List;
 
 @RequiredArgsConstructor

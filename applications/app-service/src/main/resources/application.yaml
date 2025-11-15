@@ -48,3 +48,4 @@ adapters:
     timeout: 5000
     capacidad-url: http://localhost:8081
     tecnologia-url: http://localhost:8080
+    persona-url: http://localhost:8083

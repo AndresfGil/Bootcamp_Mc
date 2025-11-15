@@ -1,6 +1,6 @@
 package co.com.bootcamp.r2dbc.helper;
 
-import co.com.bootcamp.model.bootcamp.Bootcamp;
+import co.com.bootcamp.model.bootcamp.bootcamp.Bootcamp;
 import co.com.bootcamp.model.bootcamp.page.CustomPage;
 import co.com.bootcamp.r2dbc.entities.BootcampEntity;
 import io.r2dbc.spi.Row;

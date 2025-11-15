@@ -1,4 +1,4 @@
-package co.com.bootcamp.model.bootcamp;
+package co.com.bootcamp.model.bootcamp.bootcamp;
 import lombok.*;
 
 import java.time.LocalDate;

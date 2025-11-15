@@ -1,5 +1,6 @@
 package co.com.bootcamp.model.bootcamp;
 
+import co.com.bootcamp.model.bootcamp.bootcamp.Bootcamp;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;

@@ -2,9 +2,13 @@ package co.com.bootcamp.api;
 
 import co.com.bootcamp.api.dto.BootcampListRequestDto;
 import co.com.bootcamp.api.dto.BootcampRequestDto;
+import co.com.bootcamp.api.dto.InscripcionRequestDto;
+import co.com.bootcamp.api.dto.InscripcionResponseDto;
 import co.com.bootcamp.api.helpers.BootcampMapper;
 import co.com.bootcamp.api.helpers.DtoValidator;
+import co.com.bootcamp.api.helpers.InscripcionMapper;
 import co.com.bootcamp.usecase.bootcamp.bootcamp.BootcampUseCase;
+import co.com.bootcamp.usecase.bootcamp.inscripcion.InscripcionUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -18,8 +22,10 @@ import reactor.core.publisher.Mono;
 public class BootcampHandler {
     
     private final BootcampUseCase bootcampUseCase;
+    private final InscripcionUseCase inscripcionUseCase;
     private final DtoValidator dtoValidator;
     private final BootcampMapper bootcampMapper;
+    private final InscripcionMapper inscripcionMapper;
 
     public Mono<ServerResponse> listenGuardarBootcamp(ServerRequest req) {
         return req.bodyToMono(BootcampRequestDto.class)
@@ -68,4 +74,18 @@ public class BootcampHandler {
                         .status(HttpStatus.NO_CONTENT)
                         .build());
     }
+
+
+    public Mono<ServerResponse> listenRegistrarInscripcion(ServerRequest req) {
+        return req.bodyToMono(InscripcionRequestDto.class)
+                .flatMap(dto -> dtoValidator.validate(dto)
+                        .map(inscripcionMapper::toDomain)
+                        .flatMap(inscripcionUseCase::registrarInscripcion)
+                        .map(inscripcionMapper::toResponseDto)
+                        .flatMap(inscripcionResponseDto -> ServerResponse
+                                .status(HttpStatus.CREATED)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .bodyValue(inscripcionResponseDto)));
+    }
+
 }

@@ -4,6 +4,8 @@ import co.com.bootcamp.api.BootcampHandler;
 import co.com.bootcamp.api.dto.BootcampPageResponseDto;
 import co.com.bootcamp.api.dto.BootcampRequestDto;
 import co.com.bootcamp.api.dto.BootcampResponseDto;
+import co.com.bootcamp.api.dto.InscripcionRequestDto;
+import co.com.bootcamp.api.dto.InscripcionResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -136,6 +138,41 @@ public interface BootcampControllerDocs {
                                     @ApiResponse(
                                             responseCode = "500",
                                             description = "Error interno del servidor. Si ocurre un error durante la saga, se realiza rollback automático."
+                                    )
+                            }
+                    )
+            ),
+            @RouterOperation(
+                    path = "/api/inscripcion",
+                    produces = MediaType.APPLICATION_JSON_VALUE,
+                    method = RequestMethod.POST,
+                    beanClass = BootcampHandler.class,
+                    beanMethod = "listenRegistrarInscripcion",
+                    operation = @Operation(
+                            operationId = "registrarInscripcion",
+                            summary = "Registrar inscripción",
+                            description = "Registra una nueva inscripción de una persona a un bootcamp. Valida que tanto la persona como el bootcamp existan antes de crear la inscripción.",
+                            requestBody = @RequestBody(
+                                    required = true,
+                                    content = @Content(schema = @Schema(implementation = InscripcionRequestDto.class))
+                            ),
+                            responses = {
+                                    @ApiResponse(
+                                            responseCode = "201",
+                                            description = "Inscripción registrada exitosamente",
+                                            content = @Content(schema = @Schema(implementation = InscripcionResponseDto.class))
+                                    ),
+                                    @ApiResponse(
+                                            responseCode = "400",
+                                            description = "Error de validación en los datos enviados (personaId o bootcampId inválidos)"
+                                    ),
+                                    @ApiResponse(
+                                            responseCode = "404",
+                                            description = "Persona o bootcamp no encontrado"
+                                    ),
+                                    @ApiResponse(
+                                            responseCode = "500",
+                                            description = "Error interno del servidor"
                                     )
                             }
                     )

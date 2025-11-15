@@ -1,4 +1,4 @@
-package co.com.bootcamp.model.bootcamp;
+package co.com.bootcamp.model.bootcamp.bootcamp;
 
 import co.com.bootcamp.model.bootcamp.gateways.CapacidadInfo;
 import lombok.AllArgsConstructor;

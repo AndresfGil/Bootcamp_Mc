@@ -1,6 +1,6 @@
 package co.com.bootcamp.r2dbc;
 
-import co.com.bootcamp.model.bootcamp.Bootcamp;
+import co.com.bootcamp.model.bootcamp.bootcamp.Bootcamp;
 import co.com.bootcamp.model.bootcamp.gateways.BootcampRepository;
 import co.com.bootcamp.model.bootcamp.page.CustomPage;
 import co.com.bootcamp.r2dbc.entities.BootcampEntity;

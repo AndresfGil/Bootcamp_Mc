@@ -1,6 +1,6 @@
 package co.com.bootcamp.usecase.bootcamp.saga;
 
-import co.com.bootcamp.model.bootcamp.Bootcamp;
+import co.com.bootcamp.model.bootcamp.bootcamp.Bootcamp;
 import co.com.bootcamp.model.bootcamp.exception.BootcampEliminacionFallidaException;
 import co.com.bootcamp.model.bootcamp.gateways.BootcampRepository;
 import co.com.bootcamp.model.bootcamp.gateways.CapacidadGateway;
@@ -59,7 +59,7 @@ class BootcampDeletionSagaOrchestratorTest {
 
         StepVerifier.create(sagaOrchestrator.deleteBootcampWithSaga(bootcampId))
                 .expectErrorMatches(throwable -> throwable instanceof RuntimeException
-                        && throwable.getMessage().contains("Bootcamp no encontrado"))
+                        && throwable.getMessage().contains("No se pudo encontrar bootcamp por ID."))
                 .verify();
 
         verify(bootcampRepository).obtenerBootcampPorId(1L);

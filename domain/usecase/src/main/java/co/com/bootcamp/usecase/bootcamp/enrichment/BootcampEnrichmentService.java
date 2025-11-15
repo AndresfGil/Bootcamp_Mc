@@ -1,7 +1,7 @@
 package co.com.bootcamp.usecase.bootcamp.enrichment;
 
-import co.com.bootcamp.model.bootcamp.Bootcamp;
-import co.com.bootcamp.model.bootcamp.BootcampConCapacidades;
+import co.com.bootcamp.model.bootcamp.bootcamp.Bootcamp;
+import co.com.bootcamp.model.bootcamp.bootcamp.BootcampConCapacidades;
 import co.com.bootcamp.model.bootcamp.gateways.CapacidadGateway;
 import co.com.bootcamp.model.bootcamp.gateways.CapacidadInfo;
 import co.com.bootcamp.model.bootcamp.page.CustomPage;

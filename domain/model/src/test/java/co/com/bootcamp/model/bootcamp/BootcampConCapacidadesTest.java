@@ -1,5 +1,6 @@
 package co.com.bootcamp.model.bootcamp;
 
+import co.com.bootcamp.model.bootcamp.bootcamp.BootcampConCapacidades;
 import co.com.bootcamp.model.bootcamp.gateways.CapacidadInfo;
 import co.com.bootcamp.model.bootcamp.gateways.TecnologiaInfo;
 import org.junit.jupiter.api.Test;
